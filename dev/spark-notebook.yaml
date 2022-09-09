@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  namespace: minio
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - get
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - create
+  - list
+  - watch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+  namespace: minio
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jupyter
+subjects:
+- kind: ServiceAccount
+  name: jupyter
+  namespace: minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+spec:
+  type: LoadBalancer
+  selector:
+    release: jupyter
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+  - name: sparkui
+    port: 4040
+    protocol: TCP
+  - name: blockmanager
+    port: 7777
+    protocol: TCP
+  - name: driver
+    port: 2222
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-headless
+  labels:
+    release: jupyter
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: false
+  selector:
+    release: jupyter
+  ports:
+  - name: http
+    port: 8888
+    protocol: TCP
+  - name: sparkui
+    port: 4040
+    protocol: TCP
+  - name: blockmanager
+    port: 7777
+    protocol: TCP
+  - name: driver
+    port: 2222
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jupyter
+  labels:
+    release: jupyter
+spec:
+  replicas:
+  updateStrategy:
+    type: RollingUpdate
+  serviceName: jupyter-headless
+  podManagementPolicy: Parallel
+  volumeClaimTemplates:
+  - metadata:
+      name: notebook-data
+      labels:
+        release: jupyter
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 100Mi
+      storageClassName: microk8s-hostpath
+  selector:
+    matchLabels:
+      release: jupyter
+  template:
+    metadata:
+      labels:
+        release: jupyter
+      annotations:
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      serviceAccountName: jupyter
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "1"
+      containers:
+      - name: jupyter
+        image: "vensav/spark-notebook:3.3.0-scala_2.12-jre_17-slim-buster"
+        #image: "itayb/spark:3.1.1-hadoop-3.2.0-aws"
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8888
+          protocol: TCP
+        - name: sparkui
+          containerPort: 4040
+          protocol: TCP
+        - name: blockmanager
+          containerPort: 7777
+          protocol: TCP
+        - name: driver
+          containerPort: 2222
+          protocol: TCP
+        volumeMounts:
+        - name: notebook-data
+          mountPath: /home/notebook
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+          requests:
+            cpu: 1000m
+            memory: 2048Mi

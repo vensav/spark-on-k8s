@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "spark-on-k8s"
+version = "0.1.0"
+description = ""
+authors = ["Kartik Ramasubramanian <r.kartik@berkeley.edu>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pyspark = "^3.3.0"
+sparkmonitor = "^2.1.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
