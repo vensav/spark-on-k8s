@@ -2,8 +2,8 @@ import os
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
+
 spark = SparkSession.builder \
-        .master("local[2]") \
         .appName("spark-test") \
         .getOrCreate()
 
@@ -12,7 +12,6 @@ def load_config(spark_context: SparkContext):
     S3_HOST_URL = os.environ['S3_HOST_URL']
     S3_ACCESS_KEY = os.environ['S3_ACCESS_KEY']
     S3_SECRET_KEY = os.environ['S3_SECRET_KEY']
-
     spark_context._jsc.hadoopConfiguration().set('spark.executor.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4', 'true')
     spark_context._jsc.hadoopConfiguration().set('spark.driver.extraJavaOptions=-Dcom.amazonaws.services.s3.enableV4', 'true')
     spark_context._jsc.hadoopConfiguration().set('spark.hadoop.com.amazonaws.services.s3.enableV4', 'true')

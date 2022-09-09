@@ -7,7 +7,6 @@ authors = ["Kartik Ramasubramanian <r.kartik@berkeley.edu>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 pyspark = "^3.3.0"
-sparkmonitor = "^2.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

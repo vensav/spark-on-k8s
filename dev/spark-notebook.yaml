@@ -167,8 +167,23 @@ spec:
       containers:
       - name: jupyter
         image: "vensav/spark-notebook:3.3.0-scala_2.12-jre_17-slim-buster"
-        #image: "itayb/spark:3.1.1-hadoop-3.2.0-aws"
         imagePullPolicy: Always
+        env:
+          - name: MINIO_HOST_URL
+            valueFrom:
+              secretKeyRef:
+                name: minio-api-client-credentials
+                key: MINIO_HOST_URL
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-api-client-credentials
+                key: MINIO_ACCESS_KEY
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-api-client-credentials
+                key: MINIO_SECRET_KEY
         ports:
         - name: http
           containerPort: 8888

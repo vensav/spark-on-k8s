@@ -26,47 +26,65 @@ wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.0/hadoop-aw
 wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.296/aws-java-sdk-bundle-1.12.296.jar
 ```
  
+ Add minio secrets and reference it later
+```
+kubectl create secret generic minio-api-client-credentials  \
+    --from-literal=MINIO_HOST_URL="<MINIO_SVC_HOST_NAME>:9000" \
+    --from-literal=MINIO_ACCESS_KEY="YourAccessKey" \
+    --from-literal=MINIO_SECRET_KEY="YourSecretKey" \
+    -n minio 
+```
 
-## Poetry shell pyspark
+
+
+## Local testing and base images
 
 ### Quick Test Locally (assuming you have something linke minikube or microk8s running locally)
 ```
 poetry install
 export SPARK_LOCAL_IP=<Local IP>
-spark-submit spark_on_k8s/main.py
+spark-submit spark_on_k8s/main.py --master=local[1]
 ```
 
-
-## Build Base Images
+### Build Base Image
 ```
 cd dev/base_spark_image
 chmod +x build_base_image.sh && ./build_base_image.sh
+```
+
+### Build Notebook Image
+```
+cd dev/base_notebook_image
 chmod +x build_notebook_image.sh && ./build_notebook_image.sh
 ```
+
 
 ## Spark Notebook
 Make sure to install in the same namespace where minio is installed
 Inspired by blog posted by [Itay Bittan](https://towardsdatascience.com/jupyter-notebook-spark-on-kubernetes-880af7e06351)
 ```
-kubectl apply -f spark-notebook.yaml -n minio
+kubectl apply -f dev/spark-notebook.yaml -n minio
 ```
 See sample notebook under [here](notebook/spark-k8s-test.ipynb). If everything works fine, you should get a monitor like below
 
 ![jupyter-sparkmonitor](notebook/sparkmonitor.png)
+
+### Cleaning up if needed
+`kubectl delete pods -l  spark-app-name=test-app -n minio`
 
 
 ## Spark-Operator Install 
 ```
 # https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
 helm repo add spark-operator https://googlecloudplatform.github.io/spark-on-k8s-operator
-helm install spark-operator spark-operator/spark-operator --namespace spark-operator --create-namespace
+helm install spark-operator spark-operator/spark-operator --namespace spark-operator --create-namespace --set webhook.enable=true --set webhook.port=443
 ```
 
 ## Build and test Pyspark code using spark operator
+Note:- Uses the jupyter service account that is defined when deploying notebook
 ```
-docker build -t vensav/spark-on-k8s-test:3.1.1-hadoop-3.2.0-aws -f dev/Dockerfile .
-docker push vensav/spark-on-k8s-test:3.1.1-hadoop-3.2.0-aws
-kubectl apply -f dev/spark-py-pi.yaml
+chmod +x dev/spark-operator-create-driver.sh && dev/spark-operator-create-driver.sh
+kubectl apply -f dev/spark-operator-python-test.yaml -n minio
 ```
-
+Unlike spark notebook above where sparkmonitor is currently not supported on scala 2.13, operator seems to work fine on both scala-2.12 and scala-2.13 images
 
