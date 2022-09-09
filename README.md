@@ -77,7 +77,7 @@ See sample notebook under [here](notebook/spark-k8s-test.ipynb). If everything w
 ```
 # https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
 helm repo add spark-operator https://googlecloudplatform.github.io/spark-on-k8s-operator
-helm install spark-operator spark-operator/spark-operator --namespace spark-operator --create-namespace --set webhook.enable=true --set webhook.port=443
+helm install spark-operator spark-operator/spark-operator --namespace spark-operator --create-namespace 
 ```
 
 ## Build and test Pyspark code using spark operator
