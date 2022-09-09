@@ -4,9 +4,11 @@ In this guide, we will setup spark with minio on kubernetes
 
 ## Pre-requisites
 1. An existing kubernetes cluster
-2. MINIO Installed in kubernetes in the name space minio
-3. Download JDK 17 if testing locally
-4. Install poetry for testing python code locally
+2. MINIO Installed in kubernetes in the namespace called minio
+3. Optional - Download JDK 17 if testing locally
+4. Optional - Install poetry for testing python code locally
+
+For this demo, I am going to upload a json file from [here](data/orders.json) to a bucket called test-bucket in minio
 
 
 ## Getting started - Spark Installation locally
