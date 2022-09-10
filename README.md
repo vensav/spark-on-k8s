@@ -88,3 +88,30 @@ kubectl apply -f dev/spark-operator-python-test.yaml -n minio
 ```
 Unlike spark notebook above where sparkmonitor is currently not supported on scala 2.13, operator seems to work fine on both scala-2.12 and scala-2.13 images
 
+
+## Using spark-submit instead of using operator
+
+```
+$SPARK_HOME/bin/spark-submit \
+    --master k8s://https://<KUBE CLUSTER IP>:16443 \
+    --deploy-mode cluster \
+    --name pyspark-submit-test \
+    --conf spark.executor.instances=3 \
+    --conf spark.kubernetes.authenticate.driver.serviceAccountName=jupyter \
+    --conf spark.kubernetes.namespace=minio \
+    --conf spark.kubernetes.container.image=vensav/spark-operator-driver:3.3.0-scala_2.12-jre_17-slim-buster \
+    --conf spark.kubernetes.driver.secretKeyRef.S3_HOST_URL=minio-api-client-credentials:MINIO_HOST_URL \
+    --conf spark.kubernetes.executor.secretKeyRef.S3_HOST_URL=minio-api-client-credentials:MINIO_HOST_URL \
+    --conf spark.kubernetes.driver.secretKeyRef.S3_ACCESS_KEY=minio-api-client-credentials:MINIO_ACCESS_KEY \
+    --conf spark.kubernetes.executor.secretKeyRef.S3_ACCESS_KEY=minio-api-client-credentials:MINIO_ACCESS_KEY \
+    --conf spark.kubernetes.driver.secretKeyRef.S3_SECRET_KEY=minio-api-client-credentials:MINIO_SECRET_KEY \
+    --conf spark.kubernetes.executor.secretKeyRef.S3_SECRET_KEY=minio-api-client-credentials:MINIO_SECRET_KEY \
+     local:///app/spark_on_k8s/main.py
+```
+
+
+## Building Images from scratch (yet to be tried)
+Idea is to do something like below -
+- https://kienmn97.medium.com/deployment-of-standalone-spark-cluster-on-kubernetes-ba15978658bf
+- https://github.com/KienMN/Standalone-Spark-on-Kubernetes/blob/master/images/spark-ui-proxy/Dockerfile
+
