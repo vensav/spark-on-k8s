@@ -12,8 +12,7 @@ For this demo, I am going to upload a json file from [here](data/orders.json) to
 
 
 ## Getting started - Spark Installation locally
-
-Download latest version of spark from [here](https://dlcdn.apache.org/spark/spark-3.3.0/spark-3.3.0-bin-hadoop3.tgz). Using spark 3.3.0 with scala-12 and hadoop-3.3. Add additional jars needed for aws-sdk and hadoop-3
+Download latest version of spark from [here](https://dlcdn.apache.org/spark/spark-3.3.0/spark-3.3.0-bin-hadoop3.tgz). Using spark 3.3.0 with scala-12 and hadoop-3.3. Add additional jars needed for aws-sdk and hadoop-3 (this will ensure that these JARs get copied over to docker image that we would be building under the section build base image)
 
 ``` 
 tar xvzf spark-3.3.0-bin-hadoop3.tgz
@@ -22,8 +21,8 @@ export SPARK_HOME=/usr/local/spark-3.3
 export PATH=$PATH:$SPARK_HOME/bin
 
 cd /usr/local/spark-3.3/jars
-wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.0/hadoop-aws-3.3.0.jar
-wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.296/aws-java-sdk-bundle-1.12.296.jar
+wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.298/aws-java-sdk-bundle-1.12.298.jar
 ```
  
  Add minio secrets and reference it later
@@ -36,10 +35,9 @@ kubectl create secret generic minio-api-client-credentials  \
 ```
 
 
-
 ## Local testing and base images
 
-### Quick Test Locally (assuming you have something linke minikube or microk8s running locally)
+### Quick Test Locally (to check if spark JARs and minio are working fine)
 ```
 poetry install
 export SPARK_LOCAL_IP=<Local IP>
@@ -52,10 +50,11 @@ cd dev/base_spark_image
 chmod +x build_base_image.sh && ./build_base_image.sh
 ```
 
-### Build Notebook Image
+
+### Build Spark Notebook Image
 ```
 cd dev/base_notebook_image
-chmod +x build_notebook_image.sh && ./build_notebook_image.sh
+chmod +x build_spark_notebook.sh && ./build_spark_notebook.sh
 ```
 
 
@@ -69,11 +68,28 @@ See sample notebook under [here](notebook/spark-k8s-test.ipynb). If everything w
 
 ![jupyter-sparkmonitor](notebook/sparkmonitor.png)
 
+
+### Test Spark Image
+```
+$SPARK_HOME/bin/spark-submit \
+    --master k8s://https://<KUBE CLUSTER IP>:16443 \
+    --deploy-mode cluster \
+    --name spark-submit-examples-sparkpi \
+    --conf spark.executor.instances=3 \
+    --conf spark.kubernetes.authenticate.driver.serviceAccountName=jupyter \
+    --conf spark.kubernetes.namespace=minio \
+    --class org.apache.spark.examples.SparkPi \
+    --conf spark.kubernetes.container.image=vensav/spark:3.3.0-scala_2.12-jre_17-slim-buster \
+     local:///opt/spark/examples/jars/spark-examples_2.12-3.3.0.jar 80
+```
+
 ### Cleaning up if needed
 `kubectl delete pods -l  spark-app-name=test-app -n minio`
 
 
-## Spark-Operator Install 
+## Using Spark-Operator on k8s
+
+### Install using helm
 ```
 # https://github.com/GoogleCloudPlatform/spark-on-k8s-operator
 helm repo add spark-operator https://googlecloudplatform.github.io/spark-on-k8s-operator
@@ -83,20 +99,24 @@ helm install spark-operator spark-operator/spark-operator --namespace spark-oper
 ## Build and test Pyspark code using spark operator
 Note:- Uses the jupyter service account that is defined when deploying notebook
 ```
+poetry export --without-hashes --format=requirements.txt > dev/requirements.txt
 chmod +x dev/spark-operator-create-driver.sh && dev/spark-operator-create-driver.sh
 kubectl apply -f dev/spark-operator-python-test.yaml -n minio
 ```
 Unlike spark notebook above where sparkmonitor is currently not supported on scala 2.13, operator seems to work fine on both scala-2.12 and scala-2.13 images
 
 
-## Using spark-submit instead of using operator
-
+## Using spark-submit on k8s instead of using operator
 ```
 $SPARK_HOME/bin/spark-submit \
     --master k8s://https://<KUBE CLUSTER IP>:16443 \
     --deploy-mode cluster \
     --name pyspark-submit-test \
     --conf spark.executor.instances=3 \
+    --conf spark.driver.cores=1  \
+    --conf spark.driver.memory=1g \
+    --conf spark.executor.cores=2 \
+    --conf spark.executor.memory=2g  \
     --conf spark.kubernetes.authenticate.driver.serviceAccountName=jupyter \
     --conf spark.kubernetes.namespace=minio \
     --conf spark.kubernetes.container.image=vensav/spark-operator-driver:3.3.0-scala_2.12-jre_17-slim-buster \

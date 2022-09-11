@@ -3,9 +3,11 @@
 BASE_OS="buster"
 SPARK_VERSION="3.3.0"
 SCALA_VERSION="scala_2.12"
+#SCALA_VERSION="scala_2.13"
 DOCKERFILE="Dockerfile"
 DOCKERIMAGETAG="17-slim"
 SPARK_BASE=/usr/local/spark-3.3
+#SPARK_BASE=/usr/local/spark-3.3-scala-2.13
 
 # Building Docker image for spark on kubernetes
 $SPARK_BASE/bin/docker-image-tool.sh \

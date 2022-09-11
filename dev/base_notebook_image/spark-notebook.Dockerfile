@@ -9,23 +9,8 @@ RUN apt-get update && apt install -y \
  && rm -rf /var/lib/apt/lists/* \
  && rm -rf /var/cache/apt/*
 
-# Install node.js 
-# Using Debian, as root
-RUN apt-get update && apt-get install -y curl
-RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
-RUN apt-get install -y nodejs
-
-
-# Add Spark Jars
-RUN cd /opt/spark/jars \
- && wget "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar"
-RUN cd /opt/spark/jars \
- && wget "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.298/aws-java-sdk-bundle-1.12.298.jar"
-
-
-# Install Pip
+# Install pip
 RUN apt-get update && apt-get install -y python3-pip 
-
 
 # Add all python packages  needed
 RUN pip install \
@@ -47,7 +32,6 @@ VOLUME /home/notebook/
 CMD jupyter lab --port=8888 --ip=0.0.0.0 --no-browser --allow-root \
     --NotebookApp.token='' --notebook-dir=/home/notebook/  \
     --LabApp.token='' --LabApp.disable_check_xsrf=True 
-
 
 # Add regular user with sudo privilliges
 RUN useradd -ms /bin/bash kartik && usermod -aG sudo kartik
