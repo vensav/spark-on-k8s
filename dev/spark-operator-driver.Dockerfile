@@ -5,7 +5,7 @@ FROM vensav/spark-py:${IMAGE_TAG}
 USER root 
 
 # Install Pip
-RUN apt-get update && apt-get install -y python3-pip 
+RUN apt-get update && apt-get install -y python3-pip
 
 WORKDIR /app
 

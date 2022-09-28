@@ -1,15 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: jupyter-spark-notebook
+  name: jupyter-gpu-spark-notebook
   labels:
-    app: jupyter-spark-notebook
+    app: jupyter-gpu-spark-notebook
     spark-version: 3.3.0-scala_2.12-jre_17
+    cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
 spec:
   type: LoadBalancer
   selector:
-    app: jupyter-spark-notebook
+    app: jupyter-gpu-spark-notebook
     spark-version: 3.3.0-scala_2.12-jre_17
+    cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
   ports:
   - name: http
     port: 8888
@@ -29,15 +31,17 @@ kind: Service
 metadata:
   name: jupyter-headless
   labels:
-    app: jupyter-spark-notebook
+    app: jupyter-gpu-spark-notebook
     spark-version: 3.3.0-scala_2.12-jre_17
+    cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
 spec:
   type: ClusterIP
   clusterIP: None
   publishNotReadyAddresses: false
   selector:
-    app: jupyter-spark-notebook
+    app: jupyter-gpu-spark-notebook
     spark-version: 3.3.0-scala_2.12-jre_17
+    cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
   ports:
   - name: http
     port: 8888
@@ -55,11 +59,11 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: jupyter-spark-notebook
+  name: jupyter-gpu-spark-notebook
   labels:
-    app: jupyter-spark-notebook
+    app: jupyter-gpu-spark-notebook
     spark-version: 3.3.0-scala_2.12-jre_17
-    #cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
+    cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
 spec:
   replicas:
   updateStrategy:
@@ -70,9 +74,9 @@ spec:
   - metadata:
       name: notebook-data
       labels:
-        app: jupyter-spark-notebook
+        app: jupyter-gpu-spark-notebook
         spark-version: 3.3.0-scala_2.12-jre_17
-        #cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
+        cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
     spec:
       accessModes:
       - ReadWriteOnce
@@ -83,15 +87,15 @@ spec:
       storageClassName: microk8s-hostpath
   selector:
     matchLabels:
-      app: jupyter-spark-notebook
+      app: jupyter-gpu-spark-notebook
       spark-version: 3.3.0-scala_2.12-jre_17
-      #cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
+      cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
   template:
     metadata:
       labels:
-        app: jupyter-spark-notebook
+        app: jupyter-gpu-spark-notebook
         spark-version: 3.3.0-scala_2.12-jre_17
-        #cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
+        cuda-image: 11.7.1-cudnn8-runtime-ubuntu22.04
       annotations:
     spec:
       restartPolicy: Always
@@ -102,22 +106,21 @@ spec:
         - name: ndots
           value: "1"
       containers:
-      - name: jupyter-spark-notebook
-        image: "vensav/spark-notebook:3.3.0-scala_2.12-jre_17-slim-bullseye"
-        #image: "vensav/gpu-jupyter-spark:v1.4_cuda-11.7_ubuntu-22.04_slim"
+      - name: jupyter-gpu-spark-notebook
+        image: "vensav/gpu-jupyter-spark:v1.4_cuda-11.7_ubuntu-22.04_slim_spark-3.3"
         imagePullPolicy: Always
         env:
-          - name: S3_HOST_URL
+          - name: MINIO_HOST_URL
             valueFrom:
               secretKeyRef:
                 name: minio-api-client-credentials
                 key: MINIO_HOST_URL
-          - name: AWS_ACCESS_KEY_ID
+          - name: MINIO_ACCESS_KEY
             valueFrom:
               secretKeyRef:
                 name: minio-api-client-credentials
                 key: MINIO_ACCESS_KEY
-          - name: AWS_SECRET_ACCESS_KEY
+          - name: MINIO_SECRET_KEY
             valueFrom:
               secretKeyRef:
                 name: minio-api-client-credentials

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BASE_OS="buster"
+BASE_OS="bullseye"
 SPARK_VERSION="3.3.0"
 SCALA_VERSION="scala_2.12"
 DOCKERIMAGETAG="17-slim"

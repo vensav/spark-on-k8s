@@ -20,12 +20,12 @@ apiVersion: "sparkoperator.k8s.io/v1beta2"
 kind: SparkApplication
 metadata:
   name: pyspark-operator-python-test
-  namespace: minio
+  namespace: ml-data-engg
 spec:
   type: Python
   pythonVersion: "3"
   mode: cluster
-  image: vensav/spark-operator-driver:3.3.0-scala_2.12-jre_17-slim-buster
+  image: vensav/spark-operator-driver:3.3.0-scala_2.12-jre_17-slim-bullseye
   imagePullPolicy: Always
   mainApplicationFile: local:///app/spark_on_k8s/main.py
   sparkVersion: "3.3.0"
@@ -41,15 +41,15 @@ spec:
     memory: "512m"
     labels:
       version: 3.3.0
-    serviceAccount: jupyter
+    serviceAccount: vensav-ml-data-deployer
     envSecretKeyRefs:
       S3_HOST_URL:
         name: minio-api-client-credentials
         key: MINIO_HOST_URL
-      S3_ACCESS_KEY:
+      AWS_ACCESS_KEY_ID:
         name: minio-api-client-credentials
         key: MINIO_ACCESS_KEY
-      S3_SECRET_KEY:
+      AWS_SECRET_ACCESS_KEY:
         name: minio-api-client-credentials
         key: MINIO_SECRET_KEY
   executor:
@@ -62,10 +62,10 @@ spec:
       S3_HOST_URL:
         name: minio-api-client-credentials
         key: MINIO_HOST_URL
-      S3_ACCESS_KEY:
+      AWS_ACCESS_KEY_ID:
         name: minio-api-client-credentials
         key: MINIO_ACCESS_KEY
-      S3_SECRET_KEY:
+      AWS_SECRET_ACCESS_KEY:
         name: minio-api-client-credentials
         key: MINIO_SECRET_KEY
   deps:

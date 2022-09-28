@@ -5,7 +5,7 @@ FROM vensav/spark-py:${IMAGE_TAG}
 USER root
 
 RUN apt-get update && apt install -y \
-    wget \
+    wget sudo \
  && rm -rf /var/lib/apt/lists/* \
  && rm -rf /var/cache/apt/*
 
@@ -28,17 +28,20 @@ jupyter nbextension enable  sparkmonitor --py --system && \
 ln -s /usr/local/lib/python3.9/dist-packages/sparkmonitor/listener_2.12.jar /opt/spark/jars/listener_2.12.jar
 
 # Start Jupyter Lab Service as root
-VOLUME /home/notebook/
+RUN mkdir -p /home/joyvan/
 CMD jupyter lab --port=8888 --ip=0.0.0.0 --no-browser --allow-root \
-    --NotebookApp.token='' --notebook-dir=/home/notebook/  \
+    --NotebookApp.token='' --notebook-dir=/home/joyvan/  \
     --LabApp.token='' --LabApp.disable_check_xsrf=True 
 
 # Add regular user with sudo privilliges
-RUN useradd -ms /bin/bash kartik && usermod -aG sudo kartik
+RUN useradd -ms /bin/bash joyvan && usermod -aG sudo joyvan
+RUN echo "joyvan     ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN chown -R joyvan:users /home/joyvan
+EXPOSE 8888 4040 7777 2222
 
 # Switch to regular user
-USER kartik
-WORKDIR /home/kartik
+USER joyvan
+WORKDIR /home/joyvan
 
 # Create profile for regular user and enable sparkmonitor extension
 # https://pypi.org/project/jupyterlab-sparkmonitor/
