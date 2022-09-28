@@ -99,7 +99,7 @@ docker push vensav/gpu-jupyter-spark:v1.4_cuda-11.7_ubuntu-22.04_slim
 Using namepsace ml-data-engg. Change namespace as needed for your use case. Make sure the namespace exists.
 Inspired by blog posted by [Itay Bittan](https://towardsdatascience.com/jupyter-notebook-spark-on-kubernetes-880af7e06351)
 - Select `vensav/spark-notebook:3.3.0-scala_2.12-jre_17-slim-bullseye` for regular spark-notebook or
-- `vensav/gpu-jupyter-spark:v1.4_cuda-11.7_ubuntu-22.04_slim` for gpu enabled notebook. In this case make sure you are deploying on a node with gpu
+- `vensav/gpu-spark-notebook:v1.4_cuda-11.7_ubuntu-22.04_slim_spark-3.3` for gpu enabled notebook. In this case make sure you are deploying on a node with gpu
 ```
 kubectl apply -f dev/service-account.yaml
 kubectl apply -f dev/spark-notebook.yaml -n ml-data-engg
